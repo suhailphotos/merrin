@@ -33,5 +33,36 @@ SMOB001:
   country: USA
   iso_country_code: US
 
+HLIB001:
+  sublocation: The Huntington Library
+  city: Los Angeles
+  state: California
+  country: USA
+  iso_country_code: US
+
+WESC001:
+  sublocation: Westfield Century City
+  city: Los Angeles
+  state: California
+  country: USA
+  iso_country_code: US
+
+WADC001:
+  sublocation: Walt Disney Concert Hall
+  city: Los Angeles
+  state: California
+  country: USA
+  iso_country_code: US
+
+MTAM001:
+  sublocation: Mount Tamalpais
+  city: Mill Valley
+  state: California
+  country: USA
+  iso_country_code: US
+
+
+
+
 
 

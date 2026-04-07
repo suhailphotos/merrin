@@ -1,0 +1,8 @@
+[project]
+name = "merrin"
+version = "0.1.0"
+description = "Metadata-first workflow for preparing large photo archives for Lightroom."
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml",
+]
