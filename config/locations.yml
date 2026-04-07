@@ -18,3 +18,20 @@ DTLA001:
   state: California
   country: USA
   iso_country_code: US
+
+OVHW001:
+  sublocation: Hollywood
+  city: Los Angeles
+  state: California
+  country: USA
+  iso_country_code: US
+
+SMOB001:
+  sublocation: Santa Monica Beach
+  city: Los Angeles
+  state: California
+  country: USA
+  iso_country_code: US
+
+
+
