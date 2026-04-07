@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Iterable
 
 IMAGE_ROOT = Path("/Volumes/dataLib/Pictures/Images")
-OUTPUT_DIR = Path("data/input")
+OUTPUT_DIR = Path("data/input/generated")
 
 SUPPORTED_EXTENSIONS = {
     ".arw",
@@ -27,7 +27,9 @@ SUPPORTED_EXTENSIONS = {
 CSV_HEADERS = [
     "filename",
     "file_extension",
+    "parent_folder",
     "full_path",
+    "asset_type",
     "location_code",
     "scene",
     "person_codes",
@@ -54,7 +56,9 @@ def write_csv_for_folder(root_folder: Path, output_csv: Path) -> int:
                 {
                     "filename": image_path.name,
                     "file_extension": image_path.suffix.lower(),
+                    "parent_folder": image_path.parent.name,
                     "full_path": str(image_path),
+                    "asset_type": "",
                     "location_code": "",
                     "scene": "",
                     "person_codes": "",
