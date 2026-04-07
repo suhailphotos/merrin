@@ -1,0 +1,47 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Temporary files
+tmp/*
+!tmp/.keep
+
+# Generated output
+data/output/*
+!data/output/.keep
+
+# Optional: ignore working CSVs in input
+# Uncomment these if you do not want real CSVs committed
+# data/input/*.csv
+
+# Keep placeholder files
+!config/.keep
+!data/.keep
+!data/input/.keep
+!data/output/.keep
+!scripts/.keep
+!lua/.keep
+!docs/.keep
