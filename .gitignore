@@ -29,6 +29,10 @@ dist/
 tmp/*
 !tmp/.keep
 
+# Data input
+data/input/*
+!data/input/.keep
+
 # Generated output
 data/output/*
 !data/output/.keep
