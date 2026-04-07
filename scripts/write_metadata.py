@@ -86,19 +86,23 @@ def build_keywords(
     flat_keywords: list[str] = []
     hierarchical_keywords: list[str] = []
 
-    if asset_type:
-        flat_keywords.append(asset_type)
+    if asset_type in {"reference", "document"}:
         hierarchical_keywords.append(f"asset_type|{asset_type}")
 
     for code in person_codes:
         person = people_lookup[code]
-        full_name = str(person["full_name"]).strip()
+
+        full_name = str(person.get("full_name", "") or "").strip()
+        ig_handle = str(person.get("ig_handle", "") or "").strip()
+
         if full_name:
             flat_keywords.append(full_name)
             hierarchical_keywords.append(f"people|{full_name}")
 
-    return unique_preserve_order(flat_keywords), unique_preserve_order(hierarchical_keywords)
+        if ig_handle:
+            hierarchical_keywords.append(f"ig|{ig_handle}")
 
+    return unique_preserve_order(flat_keywords), unique_preserve_order(hierarchical_keywords)
 
 def build_exiftool_command(
     row: dict[str, str],
@@ -157,18 +161,18 @@ def build_exiftool_command(
     ]
 
     # Clear and rewrite controlled keyword fields each run.
-    args.extend(
-        [
-            "-XMP-dc:Subject=",
-            "-XMP-lr:HierarchicalSubject=",
-        ]
-    )
+    # Replace keyword lists instead of appending.
+    if flat_keywords:
+        for kw in flat_keywords:
+            args.append(f"-XMP-dc:Subject={kw}")
+    else:
+        args.append("-XMP-dc:Subject=")
 
-    for kw in flat_keywords:
-        args.append(f"-XMP-dc:Subject+={kw}")
-
-    for kw in hierarchical_keywords:
-        args.append(f"-XMP-lr:HierarchicalSubject+={kw}")
+    if hierarchical_keywords:
+        for kw in hierarchical_keywords:
+            args.append(f"-XMP-lr:HierarchicalSubject={kw}")
+    else:
+        args.append("-XMP-lr:HierarchicalSubject=")
 
     if job_identifier:
         args.append(f"-XMP-photoshop:TransmissionReference={job_identifier}")
