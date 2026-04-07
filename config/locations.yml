@@ -1,0 +1,20 @@
+OBCA001:
+  sublocation: Ocean Beach
+  city: San Francisco
+  state: California
+  country: USA
+  iso_country_code: US
+
+GGCA001:
+  sublocation: Golden Gate Park
+  city: San Francisco
+  state: California
+  country: USA
+  iso_country_code: US
+
+DTLA001:
+  sublocation: Downtown
+  city: Los Angeles
+  state: California
+  country: USA
+  iso_country_code: US
