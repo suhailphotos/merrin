@@ -22,6 +22,7 @@ SUPPORTED_EXTENSIONS = {
     ".tiff",
     ".png",
     ".psd",
+    ".psb",
 }
 
 CSV_HEADERS = [

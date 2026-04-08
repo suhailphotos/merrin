@@ -1,153 +1,27 @@
 # Merrin
 
-Merrin is a lightweight project for preparing image metadata before import into Adobe Lightroom.
+Merrin is a metadata-first workflow for preparing image archives before import into Adobe Lightroom Classic.
 
-The goal is to make bulk organization faster and more consistent by keeping human input small and predictable. Instead of manually filling metadata inside Lightroom for large archives, Merrin uses generated CSV files plus YAML lookup files to write metadata to image files or XMP sidecars ahead of import.
+The goal is to reduce manual tagging inside Lightroom by doing the heavy lifting beforehand:
 
-## Project goal
+1. generate CSV inventory files
+2. fill metadata codes in a working CSV
+3. write metadata to image files or XMP sidecars
+4. import into Lightroom
+5. generate Smart Collection hierarchy from the written metadata
 
-Build and maintain a workflow that helps create a single master Lightroom catalog named `Lr_Master` with at least the following metadata applied to images before import:
+## Core idea
 
-- location metadata
-- people keywords
-- project identifier
+The CSV is only a staging tool.
 
-The long-term workflow is:
+The long-term source of truth becomes the written metadata itself:
 
-1. scan image files and export year-based CSV files
-2. copy generated CSVs into a working folder
-3. fill lightweight codes in the working CSV
-4. resolve those codes through YAML lookup files
-5. write metadata to files or sidecars
-6. import into Lightroom
-7. later generate Lightroom Smart Collections through Lua scripts
-
-## What metadata Merrin focuses on
-
-### Location fields
-These map to the Lightroom IPTC image location section:
-
-- Scene (optional)
-- Sublocation
-- City
-- State / Province
-- Country / Region
-
-`ISO Country Code` can be added and stored in `locations.yml`, but it is not required for the first version of the workflow.
-
-### Project field
-This maps to:
-
-- Workflow → Job Identifier
-
-### People in the image
-People are stored as Lightroom keywords.
-
-The CSV contains one or more person codes, and the script resolves each code through `config/people.yml` and writes the appropriate keyword(s).
-
-### Asset type
-Not every file is a normal photoshoot image.
-
-Some files are:
-
-- regular photos
-- reference images for derivative work such as textures or 3D assets
-- documents such as passport scans
-
-To support this, the CSV includes an `asset_type` column.
-
-Recommended values:
-
-- `photo`
-- `reference`
-- `document`
-
-This is better than filling non-applicable fields with placeholder values like `NA`.
-
-## Design approach
-
-The project is intentionally simple.
-
-### Location lookup
-All reusable location data lives in one YAML file:
-
-- `config/locations.yml`
-
-A location code resolves reusable location fields such as:
-
-- sublocation
-- city
-- state
-- country
-- optional ISO country code
-
-Scene is intentionally not part of the location lookup. It stays optional and is entered directly in the CSV only when needed.
-
-Example:
-
-- location code: `OBCA001`
-- sublocation: `Ocean Beach`
-- city: `San Francisco`
-- state: `California`
-- country: `USA`
-
-Then the CSV can optionally add:
-
-- scene: `Sunset`
-
-### People lookup
-All people data lives in one YAML file:
-
-- `config/people.yml`
-
-Each person record is intentionally minimal:
-
-- code
-- full name
-- IG handle
-- sex
-
-Example:
-
-- code: `theetr1n1ty`
-- full name: `Trinity Woodward`
-- IG handle: `@theetr1n1ty`
-- sex: `Female`
-
-The code is designed to be easy to type or paste into the CSV. Using a unique handle is acceptable and keeps the human workflow simple.
-
-### CSV-driven editing
-Human editing should happen mostly in CSV files inside the working folder.
-
-Current columns:
-
-```csv
-filename,file_extension,parent_folder,full_path,asset_type,location_code,scene,person_codes,job_identifier
-```
-
-Field notes:
-
-- `filename`: file name only
-- `file_extension`: lower-case file extension
-- `parent_folder`: immediate parent folder name
-- `full_path`: full path to the image file
-- `asset_type`: `photo`, `reference`, or `document`
-- `location_code`: lookup into `config/locations.yml`
-- `scene`: optional free-text scene name
-- `person_codes`: comma-separated list of people codes
-- `job_identifier`: project name or project code written to Lightroom Workflow → Job Identifier
-
-Example:
-
-```csv
-_SUH3582.ARW,.arw,2025-03-18,/Volumes/dataLib/Pictures/Images/2025/2025-03/2025-03-18/_SUH3582.ARW,photo,OBCA001,Sunset,theetr1n1ty,beach_test_01
-IMG_0001.ARW,.arw,scans,/Volumes/dataLib/Pictures/Images/2024/scans/IMG_0001.ARW,document,,,,passport_scan
-MBP_001.ARW,.arw,assets,/Volumes/dataLib/Pictures/Images/2023/assets/MBP_001.ARW,reference,,,,mbp_texture_study
-```
+- RAW files get XMP sidecars
+- non-RAW files are updated directly
+- Lightroom imports the already-tagged assets
+- Smart Collection config is generated from the metadata already present on disk
 
 ## Repository structure
-
-Current project layout:
 
 ```text
 merrin/
@@ -160,146 +34,119 @@ merrin/
 │   │   └── working/
 │   └── output/
 ├── docs/
+│   ├── csv-guide.md
+│   ├── locations-guide.md
+│   ├── people-guide.md
+│   └── workflow.md
 ├── lua/
+│   └── merrin.lrplugin/
+│       ├── Config.lua
+│       ├── Info.lua
+│       ├── Main.lua
+│       ├── Smart.lua
+│       └── Util.lua
 ├── scripts/
-│   └── generate_csvs.py
+│   ├── generate_config.py
+│   ├── generate_csvs.py
+│   └── write_metadata.py
 ├── LICENSE
-└── README.md
+├── pyproject.toml
+├── README.md
+└── uv.lock
 ```
 
-### Folder purpose
+## Main workflow
 
-#### `config/`
-Lookup files used by the scripts.
-
-- `locations.yml`: reusable location definitions
-- `people.yml`: reusable people definitions
-
-#### `data/input/generated/`
-Scanner output. Safe to regenerate.
-
-Examples:
-- `2017.csv`
-- `2018.csv`
-- `2025.csv`
-
-#### `data/input/working/`
-Your editable copies. These are the files you actually fill by hand.
-
-Recommended workflow:
-1. generate fresh CSVs into `generated/`
-2. copy the year you want into `working/`
-3. edit only the copy in `working/`
-
-#### `data/output/`
-Generated reports and logs.
-
-Examples:
-- metadata write logs
-- validation reports
-- duplicate reports later if needed
-
-#### `scripts/`
-Python scripts for the workflow.
-
-Current script:
-- `generate_csvs.py`
-
-Likely scripts later:
-- CSV validator
-- metadata writer
-
-#### `lua/`
-Lightroom Lua scripts for later automation, such as Smart Collection helpers.
-
-#### `docs/`
-Reference notes for how to populate CSV and YAML files.
-
-## Planned workflow
-
-### Phase 1: scanning
-Use `scripts/generate_csvs.py` to scan the archive and export one CSV per top-level year folder.
-
-Current source root:
+### 1. Generate CSV inventory
+`generate_csvs.py` scans the image archive and writes one CSV per top-level folder into:
 
 ```text
-/Volumes/dataLib/Pictures/Images
+data/input/generated/
 ```
 
-### Phase 2: copy to working
-Copy generated CSVs into `data/input/working/` before editing.
+### 2. Create a working CSV
+Copy the generated CSV into:
 
-Example:
-
-```bash
-cp data/input/generated/2025.csv data/input/working/2025.csv
+```text
+data/input/working/
 ```
 
-### Phase 3: human tagging
-Fill the working CSV using short codes.
+Then fill the metadata columns by hand.
+
+### 3. Write metadata
+`write_metadata.py` reads the working CSV plus:
+
+- `config/locations.yml`
+- `config/people.yml`
+
+It then writes:
+
+- XMP sidecars for RAW files
+- direct metadata updates for non-RAW files
+
+### 4. Import into Lightroom
+Import the files into your Lightroom catalog after metadata has been written.
+
+### 5. Generate Smart Collection config
+`generate_config.py` scans written metadata from the files and sidecars and builds:
+
+```text
+lua/merrin.lrplugin/Config.lua
+```
+
+This makes metadata, not the CSV, the source of truth for Smart Collection generation.
+
+### 6. Run the Lightroom plug-in
+The Merrin Lightroom plug-in reads `Config.lua` and creates the Collection Set and Smart Collection hierarchy.
+
+## Metadata Merrin uses
+
+### Location
+Mapped into Lightroom IPTC location fields:
+
+- Scene
+- Sublocation
+- City
+- State / Province
+- Country / Region
+- optional ISO Country Code
+
+### People
+Stored as keywords and hierarchical keywords.
 
 Examples:
-- location code like `OBCA001`
-- people codes like `theetr1n1ty,janedoe`
-- optional scene only when useful
-- job identifier for project grouping
-- asset type for deciding how the file should be treated later
+- flat keyword: `Valentina Reneff-Olson`
+- hierarchical keyword: `people|Valentina Reneff-Olson`
+- hierarchical keyword: `ig|@vallady`
 
-### Phase 4: metadata writing
-Create a script that:
+### Project
+Mapped to:
 
-1. reads the working CSV
-2. looks up location codes from `locations.yml`
-3. looks up person codes from `people.yml`
-4. writes metadata to the file or to an XMP sidecar
+- Workflow → Job Identifier
 
-Expected behavior:
-- RAW files should use XMP sidecars
-- non-RAW files can be updated directly where appropriate
-- scene is written only when present
-- people become keywords
-- job identifier maps to Workflow → Job Identifier
-- asset type can later be written as a keyword or used for Lightroom collection logic
+### Asset type
+Supported values:
 
-### Phase 5: Lightroom import
-Import everything into the master Lightroom catalog:
+- `photo`
+- `reference`
+- `document`
 
-- `Lr_Master`
+`photo` is treated as the default case.
+`reference` and `document` can be written into hierarchical keywords.
 
-### Phase 6: Lightroom Lua automation
-Later, add Lua scripts to help build Smart Collections such as:
+## Why the workflow is split this way
 
-- by location
-- by model / person
-- by project
-- by asset type
-- combinations such as location → person and person → location
-
-## Why this project stays small
-
-This repo is intentionally minimal because the goal is to reduce human editing time, not build a large metadata platform.
-
-Key decisions:
-
-- one `locations.yml`
-- one `people.yml`
-- no separate scene code system for now
-- no separate project lookup file for now
-- one CSV per top-level year folder
-- generated and working CSVs are kept separate
-- small set of required fields
-
-That keeps the first version practical and easier to maintain.
+- CSV is fast for human entry
+- YAML files keep repeated names and locations reusable
+- XMP / file metadata survives outside Lightroom
+- Python is better for config generation
+- Lightroom Lua stays focused on building the catalog hierarchy
 
 ## Reference docs
 
-See the docs folder for detailed population guides:
+See:
 
+- `docs/workflow.md`
 - `docs/csv-guide.md`
 - `docs/locations-guide.md`
 - `docs/people-guide.md`
-
-## Status
-
-Repo initialized. Folder structure defined. CSV generator in place. YAML lookup files in place. Next step is building the metadata writing script.
-

@@ -30,6 +30,7 @@ DIRECT_WRITE_EXTENSIONS = {
     ".tiff",
     ".png",
     ".psd",
+    ".psb",
 }
 
 ALLOWED_ASSET_TYPES = {"photo", "reference", "document"}

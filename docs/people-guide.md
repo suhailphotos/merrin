@@ -2,128 +2,53 @@
 
 This document explains how to populate `config/people.yml`.
 
-This file is the reusable lookup table for people metadata. The CSV should reference people only by code through the `person_codes` column.
+## Purpose
 
-## File purpose
-
-Each top-level key in `people.yml` is a person code.
+Each top-level key is a reusable person code used by the CSV.
 
 Example:
 
 ```yaml
-theetr1n1ty:
-  full_name: Trinity Woodward
-  ig_handle: "@theetr1n1ty"
+vallady:
+  full_name: Valentina Reneff-Olson
+  ig_handle: "@vallady"
   sex: Female
 ```
 
-When the CSV row contains:
+When the CSV contains:
 
 ```text
-person_codes = theetr1n1ty
+person_codes = vallady
 ```
 
-the metadata-writing script should resolve that code and write the appropriate keyword metadata.
+the metadata writer resolves the person into:
 
-## Recommended structure
-
-Use the code as the YAML key.
-
-Example:
-
-```yaml
-theetr1n1ty:
-  full_name: Trinity Woodward
-  ig_handle: "@theetr1n1ty"
-  sex: Female
-```
+- flat keyword for full name
+- hierarchical keyword under `people|`
+- hierarchical keyword under `ig|`
 
 ## Supported fields
 
-### `full_name`
-The canonical human-readable name.
+- `full_name`
+- `ig_handle`
+- `sex`
 
-Examples:
+## Notes
 
-- Trinity Woodward
-- Jane Doe
-- John Doe
+- use a stable code
+- the code does not need to match the IG handle, but it often can
+- the IG handle should stay quoted in YAML because of `@`
 
-This should be the main value used when writing person keywords unless you later decide otherwise.
-
-### `ig_handle`
-Optional but useful as a reference.
-
-Examples:
-
-- "@theetr1n1ty"
-- "@janedoe"
-
-Because handles begin with `@`, keep them quoted in YAML.
-
-### `sex`
-Optional reference field.
-
-Examples:
-
-- Female
-- Male
-
-This can stay simple for now.
-
-## Why use the handle-like code
-
-Using a memorable unique code like `theetr1n1ty` works well because:
-
-- it is easy to type or paste into the CSV
-- it is already unique for you
-- it avoids ambiguous short names
-
-## Example file
+## Example
 
 ```yaml
+vallady:
+  full_name: Valentina Reneff-Olson
+  ig_handle: "@vallady"
+  sex: Female
+
 theetr1n1ty:
   full_name: Trinity Woodward
   ig_handle: "@theetr1n1ty"
   sex: Female
-
-janedoe:
-  full_name: Jane Doe
-  ig_handle: "@janedoe"
-  sex: Female
-
-johndoe:
-  full_name: John Doe
-  ig_handle: "@johndoe"
-  sex: Male
 ```
-
-## Multiple people in one CSV row
-
-Use comma-separated codes in `person_codes`.
-
-Example:
-
-```text
-theetr1n1ty,janedoe
-```
-
-Rules:
-- separate with commas
-- no spaces needed
-- every code must exist in `people.yml`
-
-## Good practices
-
-- keep one canonical code per person
-- do not invent new codes directly in the CSV
-- add the person to `people.yml` first
-- keep `full_name` human-readable
-- keep codes stable over time
-
-## Example workflow
-
-1. add a new person block to `config/people.yml`
-2. choose a stable unique code
-3. fill full name, handle, and optional sex
-4. use that code in the CSV `person_codes` column
